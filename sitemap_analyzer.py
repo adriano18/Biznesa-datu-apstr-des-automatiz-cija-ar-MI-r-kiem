@@ -5,6 +5,8 @@ from fetch_sites import fetch_site
 from bs4 import BeautifulSoup
 from product_parser import extract_product
 from time import sleep
+import pandas as pd
+from pathlib import Path
 
 site = input("Enter shop URL: ").strip()
 parsed_site = urlparse(site)
@@ -155,6 +157,40 @@ for sitemap_url in sitemap_urls[:5]:
                     sleep(1)
 
                 print("\nTotal products collected:", len(products))
+
+                if products:
+                    df = pd.DataFrame(products)
+
+                    print("\n PRODUCT TABLE:")
+                    print(df[["name", "price", "currency", "availability"]].to_string(index=False))
+
+                    df["price"] = pd.to_numeric(df["price"], errors="coerce")
+
+                    print("\nPRICE STATISTICS:")
+                    print("Products with prices:", df["price"].count())
+                    print("Minimum price:", df["price"].min())
+                    print("Maximum price:", df["price"].max())
+                    print("Average price:", round(df["price"].mean(), 2))
+                    print("Median price:", df["price"].median())
+
+                    #Shop name
+                    df["store"] = parsed_site.netloc
+
+                    #New folder for reports
+                    folder = Path("reports")
+                    folder.mkdir(exist_ok=True)
+
+                    #CSV
+                    shop_name = parsed_site.netloc.replace(".", "_")
+                    csv_path = folder / f"products_{shop_name}.csv"
+
+                    #Saving
+                    df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+
+                    print("\nCSV saved:", csv_path.resolve())
+
+                else:
+                    print("No product to analyze")
         
                 # if product_url:
                 #     print("\nTesting product:", product_url)
