@@ -96,116 +96,116 @@ h2 = soup.find('h2')
 table = soup.find('table')
 terms = soup.find_all('dt')
 
-'''print("Title:", title.text if title else "No title found")
-print("Description:", description['content'] if description else "No description found")
-print("Canonical:", canonical['href'] if canonical else "No canonical link found")
-print("Robots:", robots['content'] if robots else "No robots meta tag found")
-print("Schema.org blocks found:", len(schema_block))
-print("H1:", h1.text if h1 else "No H1 found")
-print("H1 count:", h1_count)
-print("H2:", h2.text if h2 else "No H2 found")
-print("Table:", "Table found" if table else "No table found")
-print("Terms:", [term.text for term in terms] if terms else "No terms found")
+# '''print("Title:", title.text if title else "No title found")
+# print("Description:", description['content'] if description else "No description found")
+# print("Canonical:", canonical['href'] if canonical else "No canonical link found")
+# print("Robots:", robots['content'] if robots else "No robots meta tag found")
+# print("Schema.org blocks found:", len(schema_block))
+# print("H1:", h1.text if h1 else "No H1 found")
+# print("H1 count:", h1_count)
+# print("H2:", h2.text if h2 else "No H2 found")
+# print("Table:", "Table found" if table else "No table found")
+# print("Terms:", [term.text for term in terms] if terms else "No terms found")
 
-print("\n--- SEO Check Summary ---")
+# print("\n--- SEO Check Summary ---")
 
-checks = {}
+# checks = {}
 
-# Check for Title
-if title and title.get_text().strip():
-    checks['Title'] = "Present"
-else:
-    checks['Title'] = "Missing"
+# # Check for Title
+# if title and title.get_text().strip():
+#     checks['Title'] = "Present"
+# else:
+#     checks['Title'] = "Missing"
 
-# Check for Meta Description
-if description and description.get('content', '').strip():
-    checks['Description'] = "Present"
-else:
-    checks['Description'] = "Missing"
-'''
+# # Check for Meta Description
+# if description and description.get('content', '').strip():
+#     checks['Description'] = "Present"
+# else:
+#     checks['Description'] = "Missing"
+# '''
 # Check for Canonical Link
 canonical_url = canonical.get('href', '').strip() if canonical else ''
 parsed_url = urlparse(canonical_url)
-'''if not canonical_url:
-    checks['Canonical'] = "Missing or invalid"
-elif parsed_url.scheme in ("https", "http") and parsed_url.netloc and not parsed_url.fragment:
-    checks['Canonical'] = "Format OK"
-else:
-    checks['Canonical'] = "Check canonical URL format"
+# '''if not canonical_url:
+#     checks['Canonical'] = "Missing or invalid"
+# elif parsed_url.scheme in ("https", "http") and parsed_url.netloc and not parsed_url.fragment:
+#     checks['Canonical'] = "Format OK"
+# else:
+#     checks['Canonical'] = "Check canonical URL format"
 
 
-# Check for Robots Meta Tag
-if robots and robots.get('content', '').strip():
-    checks['Robots'] = "Present"
-else:
-    checks['Robots'] = "Missing"
+# # Check for Robots Meta Tag
+# if robots and robots.get('content', '').strip():
+#     checks['Robots'] = "Present"
+# else:
+#     checks['Robots'] = "Missing"
 
-print("\n--- Content Consistency Audit ---")'''
+# print("\n--- Content Consistency Audit ---")'''
 h1_text = h1.get_text(strip=True) if h1 else ""
-'''if not canonical_url or not product_url:
-    print("Canonical vs Product URL - Not checked")
-elif canonical_url.rstrip("/") == product_url.rstrip("/"):
-    print ("Canonical vs Product URL - matched")
-else:
-    print("Please review Canonical vs Product URL")
-    print("Canonical:", canonical_url)
-    print("Product URL", product_url)
-if not product_name or not h1_text:
-    print("Product name vs H1 - Not checked")
-elif product_name.casefold() == h1_text.casefold():
-    print("Product name vs H1 - matched")
-    print("H1:", h1_text)
-    print("Product name:", product_name)
-else:
-    print("Please review Product name vs H1")
-#Check for H1
-if h1_count == 0:
-    checks['H1'] = "Missing"
-elif h1_count > 1:
-    checks['H1'] = "Multiple H1 tags found"
-elif h1 and h1.get_text().strip():
-    checks['H1'] = "Present"
-else:
-    checks['H1'] = "Empty H1 tag found"
+# '''if not canonical_url or not product_url:
+#     print("Canonical vs Product URL - Not checked")
+# elif canonical_url.rstrip("/") == product_url.rstrip("/"):
+#     print ("Canonical vs Product URL - matched")
+# else:
+#     print("Please review Canonical vs Product URL")
+#     print("Canonical:", canonical_url)
+#     print("Product URL", product_url)
+# if not product_name or not h1_text:
+#     print("Product name vs H1 - Not checked")
+# elif product_name.casefold() == h1_text.casefold():
+#     print("Product name vs H1 - matched")
+#     print("H1:", h1_text)
+#     print("Product name:", product_name)
+# else:
+#     print("Please review Product name vs H1")
+# #Check for H1
+# if h1_count == 0:
+#     checks['H1'] = "Missing"
+# elif h1_count > 1:
+#     checks['H1'] = "Multiple H1 tags found"
+# elif h1 and h1.get_text().strip():
+#     checks['H1'] = "Present"
+# else:
+#     checks['H1'] = "Empty H1 tag found"
 
-issues_count = sum(1 for status in checks.values() if status not in ("Present", "Present and valid", "Format OK"))
+# issues_count = sum(1 for status in checks.values() if status not in ("Present", "Present and valid", "Format OK"))
 
-for name, status in checks.items():
-    print(f"{name}: {status}")
+# for name, status in checks.items():
+#     print(f"{name}: {status}")
 
-print(f"\n--- SEO Issues Summary ---")
-print(f"Issues found: {issues_count}")
+# print(f"\n--- SEO Issues Summary ---")
+# print(f"Issues found: {issues_count}")
 
-print("\n--- SEO Check Summary for Optional Elements ---")
+# print("\n--- SEO Check Summary for Optional Elements ---")
 
-optional_checks = {}
+# optional_checks = {}
 
-# Check for H2
-if h2 and h2.get_text().strip():
-    optional_checks['H2'] = "Present"
-else:
-    optional_checks['H2'] = "Missing"
+# # Check for H2
+# if h2 and h2.get_text().strip():
+#     optional_checks['H2'] = "Present"
+# else:
+#     optional_checks['H2'] = "Missing"
 
-# Check for dl and dt tags
-if soup.find('dl') and terms:
-    optional_checks['Definition List'] = "Present"
-else:
-    optional_checks['Definition List'] = "Missing"
+# # Check for dl and dt tags
+# if soup.find('dl') and terms:
+#     optional_checks['Definition List'] = "Present"
+# else:
+#     optional_checks['Definition List'] = "Missing"
 
-# Check for table
-if table:
-    optional_checks['Table'] = "Present"
-else:
-    optional_checks['Table'] = "Missing"
+# # Check for table
+# if table:
+#     optional_checks['Table'] = "Present"
+# else:
+#     optional_checks['Table'] = "Missing"
 
-missing_optional_count = sum(1 for status in optional_checks.values() if status != "Present")
+# missing_optional_count = sum(1 for status in optional_checks.values() if status != "Present")
 
-for name, status in optional_checks.items():
-    print(f"{name}: {status}")
+# for name, status in optional_checks.items():
+#     print(f"{name}: {status}")
 
-print(f"\n--- Optional Elements Summary ---")
-print(f"Missing optional elements: {missing_optional_count}")
-'''
+# print(f"\n--- Optional Elements Summary ---")
+# print(f"Missing optional elements: {missing_optional_count}")
+# '''
 print("\n--- Structured SEO Audit ---")
 
 audit = {}
