@@ -1,0 +1,1 @@
+# Biznesa-datu-apstr-des-automatiz-cija-ar-MI-r-kiem
