@@ -1,3 +1,9 @@
+"""Basic HTML and JSON-LD SEO diagnostics.
+
+Returns status/value findings for the Flet interface and Excel report.
+These checks do not guarantee indexing or commercial performance.
+"""
+
 import json
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
