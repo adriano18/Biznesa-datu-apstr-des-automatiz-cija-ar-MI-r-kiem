@@ -17,10 +17,12 @@ from market_report import main as create_market_report
 from urllib.parse import urlparse
 
 # STEP 1: Discover category URLs, scrape products and prepare the shop summary.
-def build_product_summary(shop_url, keywords):
-    urls = get_candidate_urls(shop_url, max_urls=15, keywords=keywords)
+def build_product_summary(shop_url, keywords, limit):
+    candidate_limit = min(100, max(15, limit * 4))
 
-    products = collect_products(urls, limit=3)
+    urls = get_candidate_urls(shop_url, max_urls=candidate_limit, keywords=keywords)
+
+    products = collect_products(urls, limit=limit)
 
     df = analyze_products(products, shop_url)
 
@@ -120,6 +122,12 @@ async def main(page: ft.Page):
         width=500
     )
 
+    limit_input = ft.TextField(
+        label="Products per shop (1-20)",
+        value="5",
+        width=500
+    )
+
     result = ft.Text("", size=14, weight="bold")
 
     products_result = ft.Text("")
@@ -158,6 +166,19 @@ async def main(page: ft.Page):
             if word.strip()
         ]
 
+        try:
+            limit = int(limit_input.value.strip())
+
+            if not 1 <= limit <= 20:
+                raise ValueError
+
+        except (ValueError, AttributeError):
+            products_result.value = (
+                "Please enter a whole number from 1 to 20."
+            )
+            page.update()
+            return
+
         if not all(urls):
             products_result.value = "Enter both shop URLs."
             page.update()
@@ -175,7 +196,7 @@ async def main(page: ft.Page):
 
             try:
                 summary = await asyncio.to_thread(
-                    build_product_summary, url, keywords
+                    build_product_summary, url, keywords, limit
                 )
 
             except Exception as error:
@@ -262,6 +283,7 @@ async def main(page: ft.Page):
         shop_a, 
         shop_b, 
         category_input,
+        limit_input,
         ft.Button("Run Analysis", on_click=run_analysis),
         ft.Button(
             content="Analyze Products",
