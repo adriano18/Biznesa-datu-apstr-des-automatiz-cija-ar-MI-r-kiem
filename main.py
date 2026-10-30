@@ -205,6 +205,9 @@ async def main(page: ft.Page):
 
             reports.append(summary)
 
+            products_result.value = "\n\n".join(reports)
+            page.update()
+
         # PDF uses fixed CSV filenames for these two shops in this version.
         #PDF script
         shops = {urlparse(url).netloc.lower() for url in urls}
