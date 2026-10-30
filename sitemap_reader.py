@@ -187,8 +187,7 @@ def get_candidate_urls(shop_url, max_urls=10, keywords=None):
                         results.append(url)
 
                     if len(results) >= max_urls:
-                        # No matching candidates in the inspected portion of the sitemap.
-    return results
+                        return results
                     
         elif root.tag.endswith("urlset"):
             selected = select_urls(root)
@@ -200,6 +199,7 @@ def get_candidate_urls(shop_url, max_urls=10, keywords=None):
                 if len(results) >= max_urls:
                     return results
                 
+    # No matching candidates in the inspected portion of the sitemap.
     return results
 
     #         child_host = (
