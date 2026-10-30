@@ -1,3 +1,5 @@
+# LEGACY PRACTICE: this file uses hard-coded sample HTML and does not run in Flet.
+# See seo_analyzer.py for the active SEO checker.
 from bs4 import BeautifulSoup
 import json
 from urllib.parse import urlparse
