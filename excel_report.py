@@ -1,3 +1,9 @@
+"""Export the two-shop SEO audit to a formatted Excel workbook.
+
+Uses the existing seo_analyzer results and stores status/value pairs for
+both shops. REVIEW and INFO are diagnostic labels, not Google rankings.
+The report is separate from the product comparison Excel."""
+
 
 from pathlib import Path
 from datetime import datetime
@@ -8,6 +14,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from seo_analyzer import analyze_seo
 
 
+# STEP 1: Turn each fetched HTML response into a structured SEO audit.
 def save_excel(url_a, data_a, url_b, data_b):
 
     def get_audit(data):
@@ -21,9 +28,11 @@ def save_excel(url_a, data_a, url_b, data_b):
             }
         }
 
+    # Both shops are represented even if one page could not be downloaded.
     audit_a = get_audit(data_a)
     audit_b = get_audit(data_b)
 
+    # STEP 2: Build one side-by-side worksheet for SEO parameters.
     wb = Workbook()
     ws = wb.active
     ws.title = "SEO Comparison"
@@ -47,6 +56,7 @@ def save_excel(url_a, data_a, url_b, data_b):
             b["value"]
         ])
 
+    # STEP 3: Make each audit status visually distinguishable in Excel.
     colors = {
         "OK": "DDF2E2",
         "REVIEW": "FFF0C2",
@@ -81,9 +91,11 @@ def save_excel(url_a, data_a, url_b, data_b):
     }.items():
         ws.column_dimensions[column].width = width
 
+    # Keep column labels visible and enable sorting/filtering.
     ws.freeze_panes = "B5"
     ws.auto_filter.ref = f"A4:E{ws.max_row}"
 
+    # STEP 4: Export a timestamped workbook to the reports directory.
     folder = Path("reports")
     folder.mkdir(exist_ok=True)
 
