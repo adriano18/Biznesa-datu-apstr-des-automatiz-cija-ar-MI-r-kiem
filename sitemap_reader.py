@@ -1,3 +1,10 @@
+"""Find candidate product-page URLs from a shop XML sitemap.
+
+Supports sitemapindex and urlset, checks robots.txt for sitemap locations,
+and filters links using category keywords in the URL.
+IMPORTANT: URL keyword matching is preliminary, not product classification.
+The flat-sitemap fallback chooses a small sample, not the whole assortment."""
+
 import requests
 import xml.etree.ElementTree as ET
 from urllib.parse import urlparse
@@ -6,6 +13,7 @@ headers = {
         "User-Agent" : "EcommerceAuditAnalyzerBot/0.1"
     }
 
+# STEP 1: Validate the store URL and normalize the category search words.
 def get_candidate_urls(shop_url, max_urls=10, keywords=None):
     parsed = urlparse(shop_url.strip())
 
@@ -21,6 +29,7 @@ def get_candidate_urls(shop_url, max_urls=10, keywords=None):
         if word.strip()
     ]
 
+    # Safety boundary: only accept URLs belonging to the requested shop host.
     def same_shop(url):
         parsed_url = urlparse(url)
 
@@ -30,6 +39,7 @@ def get_candidate_urls(shop_url, max_urls=10, keywords=None):
             == shop_host
         )
 
+    # STEP 2: Download XML and reject HTML responses or cross-host redirects.
     def read_xml(url):
         if not same_shop(url):
             return None
@@ -59,6 +69,7 @@ def get_candidate_urls(shop_url, max_urls=10, keywords=None):
         except (requests.RequestException, ET.ParseError):
             return None
 
+    # STEP 3: Look for Sitemap: declarations in robots.txt.
     robots_response = requests.get(
         base_url + "/robots.txt",
         headers=headers,
@@ -83,6 +94,7 @@ def get_candidate_urls(shop_url, max_urls=10, keywords=None):
             base_url + "/wp-sitemap.xml"
         ]
 
+    # STEP 4: Filter sitemap URLs; categories may still appear in the result.
     def select_urls(root):
         links = root.findall(".//{*}url/{*}loc")
 
@@ -112,6 +124,7 @@ def get_candidate_urls(shop_url, max_urls=10, keywords=None):
         start = len(urls) // 25
         return urls[start:start + max_urls]
 
+    # STEP 5: Read a bounded number of child maps and deduplicate URLs.
     results = []
 
     for sitemap_url in sitemap_urls[:5]:
@@ -174,7 +187,8 @@ def get_candidate_urls(shop_url, max_urls=10, keywords=None):
                         results.append(url)
 
                     if len(results) >= max_urls:
-                        return results
+                        # No matching candidates in the inspected portion of the sitemap.
+    return results
                     
         elif root.tag.endswith("urlset"):
             selected = select_urls(root)
