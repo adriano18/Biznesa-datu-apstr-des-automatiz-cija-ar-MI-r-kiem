@@ -1,8 +1,15 @@
+"""Clean a sample of product records, calculate price metrics and export CSV.
+
+The input is a list of dictionaries from product_collector. The output is
+a Pandas DataFrame with numeric prices, extracted package weights and EUR/kg.
+This is descriptive sample analysis, not a fair same-product price comparison."""
+
 from pathlib import Path
 from urllib.parse import urlparse
 import pandas as pd
 import re
 
+# STEP 1: Recognize a single package weight (kg or g) in a product title.
 def extract_weight_kg(name):
     if not isinstance(name, str):
         return None
@@ -13,6 +20,7 @@ def extract_weight_kg(name):
         flags=re.IGNORECASE
     )
 
+    # Ambiguous or missing weights remain unknown rather than being guessed.
     if len(matches) != 1:
         return None
 
@@ -28,6 +36,7 @@ def extract_weight_kg(name):
 
     return weight
 
+# STEP 2: Convert the collected records to a cleaned Pandas table.
 def analyze_products(products, shop_url):
     if not products:
         print("No products to analyze")
@@ -36,12 +45,14 @@ def analyze_products(products, shop_url):
     df = pd.DataFrame(products)
 
     #Convert prices to numbers
+    # Invalid price strings become NaN and are excluded from numeric statistics.
     df["price"] = pd.to_numeric(
         df["price"],
         errors="coerce"
     )
 
     #Weight
+    # Unit comparison is possible only when a package weight is detected.
     df["weight_kg"] = df["name"].apply(extract_weight_kg)
 
     #Calculate unit price
@@ -60,6 +71,7 @@ def analyze_products(products, shop_url):
         .to_string(index=False)
     )
 
+    # STEP 3: Describe this sample using summary statistics.
     #Calculate price statistics
     print("\nPRICE STATISTICS:")
     print("Total products:", len(df))
@@ -69,6 +81,7 @@ def analyze_products(products, shop_url):
     print("Average:", round(df["price"].mean(), 2))
     print("Median:", df["price"].median())
 
+    # STEP 4: Save UTF-8 CSV beside the project code for Excel and PDF.
     #Save CV
     folder = Path(__file__).resolve().parent / "reports"
     folder.mkdir(exist_ok=True)
