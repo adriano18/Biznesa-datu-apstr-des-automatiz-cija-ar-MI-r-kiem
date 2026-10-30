@@ -6,40 +6,85 @@ from excel_report import save_excel
 from sitemap_reader import get_candidate_urls
 from product_collector import collect_products
 from data_analysis import analyze_products
+import pandas as pd
+from market_report import main as create_market_report
+from urllib.parse import urlparse
 
-def build_product_summary(shop_url):
-    urls = get_candidate_urls(shop_url, max_urls=10)
+def build_product_summary(shop_url, keywords):
+    urls = get_candidate_urls(shop_url, max_urls=15, keywords=keywords)
 
     products = collect_products(urls, limit=3)
 
     df = analyze_products(products, shop_url)
 
     if df is None:
-        return f"{shop_url}\nNo products found."
+        raise ValueError("No products found for selected category")
 
     prices = df["price"].dropna()
 
-    average = (
-        f"{prices.mean():.2f} EUR"
-        if not prices.empty
-        else "Not available"
-    )
+    # average = (
+    #     f"{prices.mean():.2f} EUR"
+    #     if not prices.empty
+    #     else "Not available"
+    # )
+
+    unit_prices = df["price_per_kg"].dropna()
 
     in_stock = (
         df["availability"]
         .fillna("")
         .astype(str)
-        .str.endswith("InStock")
+        .str.endswith("/InStock")
         .sum()
     )
 
-    return (
-        f"Shop: {shop_url}\n"
-        f"Products collected: {len(df)}\n"
-        f"Average price: {average}\n"
-        f"In stock: {in_stock}\n"
-        f"CSV report saved in reports"
+    lines = [
+        f"Shop: {shop_url}",
+        f"Products collected: {len(df)}",
+        f"In stock: {in_stock}/{len(df)}",
+        (
+            f"Average price: {prices.mean():.2f} EUR"
+            if not prices.empty else "Average price: N/A"
+        ),
+        (
+            f"Median price/kg: {unit_prices.median():.2f} EUR"
+            if not unit_prices.empty else "Median price/kg: N/A"
+        ),
+        "",
+        "PRODUCTS:"
+    ]
+
+    for _, product in df.iterrows():
+        name = str(product["name"])
+
+        price = (
+            f"{product['price']:.2f} EUR"
+            if pd.notna(product["price"])
+            else "N/A"
+        )
+
+        unit_price = (
+            f"{product['price_per_kg']:.2f} EUR/kg"
+            if pd.notna(product["price_per_kg"])
+            else "N/A"
+        )
+
+        availability = (
+            str(product["availability"]).rsplit("/", 1)[-1]
+            if pd.notna(product["availability"])
+            else "Unknown"
+        )
+
+        lines.append(
+            f"{name}\n"
+            f"{price} | {unit_price} | {availability}\n"
+        )
+
+    lines.append(
+        f"CSV saved: {df.attrs.get('csv_path', 'Not available')}"
     )
+
+    return "\n".join(lines)
 
 async def main(page: ft.Page):
     page.title = "Ecommerce Market Analyzer"
@@ -61,7 +106,13 @@ async def main(page: ft.Page):
         width=500
         )
 
-    result = ft.Text("Result will be displayed here", size=14, weight="bold")
+    category_input = ft.TextField(
+        label="Product category keywords",
+        value="sausa-bariba, kakiem",
+        width=500
+    )
+
+    result = ft.Text("", size=14, weight="bold")
 
     products_result = ft.Text("")
 
@@ -90,15 +141,22 @@ async def main(page: ft.Page):
     async def run_products(e):
         urls = [shop_a.value.strip(), shop_b.value.strip()]
 
+        keywords = [
+            word.strip()
+            for word in category_input.value.split(",")
+            if word.strip()
+        ]
+
         if not all(urls):
             products_result.value = "Enter both shop URLs."
             page.update()
             return
 
+        reports = []
+        all_ok = True
+
         products_result.value = "Starting product analysis..."
         page.update()
-
-        reports = []
 
         for url in urls:
             products_result.value = f"Analyzing {url}..."
@@ -106,12 +164,44 @@ async def main(page: ft.Page):
 
             try:
                 summary = await asyncio.to_thread(
-                    build_product_summary, url
+                    build_product_summary, url, keywords
                 )
+
             except Exception as error:
+                all_ok = False
                 summary = f"{url}\nError: {error}"
 
             reports.append(summary)
+
+        #PDF script
+        shops = {urlparse(url).netloc.lower() for url in urls}
+        supported_shops = {"suns.lv", "www.zoocentrs.lv"}
+
+        if all_ok and shops == supported_shops:
+            products_result.value = (
+                "\n\n".join(reports) + "\n\nGenerating PDF..."
+            )
+
+            page.update()
+
+            try:
+                pdf_path = await asyncio.to_thread(
+                    create_market_report,
+                    category_input.value.strip()
+                )
+                reports.append(f"PDF saved: {pdf_path}")
+            except Exception as error:
+                reports.append(f"PDF generation error: {error}")
+
+        elif not all_ok:
+            reports.append(
+                "PDF not generated: product analysis was incomplete."
+            )
+        else:
+            reports.append(
+                "PDF export currently supports suns.lv "
+                "and www.zoocentrs.lv only."
+            )
 
         products_result.value = "\n\n".join(reports)
         page.update()
@@ -122,6 +212,7 @@ async def main(page: ft.Page):
 
         if not url_a.startswith("https://") or not url_b.startswith("https://"):
             result.value = "Please enter valid URLs starting with 'https://'"
+            page.update()
             return
 
         result.value = f"Downloading {shop_a.label}"
@@ -156,6 +247,7 @@ async def main(page: ft.Page):
         ft.Text("SEO Audit and Market Analysis Tool", size=20),
         shop_a, 
         shop_b, 
+        category_input,
         ft.Button("Run Analysis", on_click=run_analysis),
         ft.Button(
             content="Analyze Products",
