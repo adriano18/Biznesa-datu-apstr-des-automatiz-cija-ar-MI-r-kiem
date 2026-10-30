@@ -1,8 +1,15 @@
+"""Fetch one HTML page and return a consistent status/HTML record.
+
+Checks robots.txt before requesting the page. SKIPPED means access could not
+be verified or was disallowed; ERROR means the request failed.
+A successful HTTP response is not proof that the page contains product data."""
+
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from urllib.robotparser import RobotFileParser
 
+# STEP 1: Normalize the requested URL and identify the crawler.
 def fetch_site(url):
     url = url.strip()
 
@@ -10,6 +17,7 @@ def fetch_site(url):
         "User-Agent" : "EcommerceAuditAnalyzerBot/0.1"
     }
 
+    # STEP 2: Check robots.txt; do not silently bypass access restrictions.
     robots_url = urljoin(url, "/robots.txt")
 
     try:
@@ -37,6 +45,7 @@ def fetch_site(url):
                 "html": ""
             }
 
+        # STEP 3: Fetch the page only after the robots decision.
         response = requests.get(
             url,
             headers=headers,
@@ -45,12 +54,14 @@ def fetch_site(url):
 
         response.raise_for_status()
 
+        # STEP 4: Pass the HTML back to SEO or product parsers.
         return {
             "status": "OK",
             "message": "Page downloaded successfully",
             "html": response.text
         }
 
+    # Network and HTTP errors are reported as data, not uncaught exceptions.
     except requests.RequestException as error:
         return {
             "status": "ERROR",

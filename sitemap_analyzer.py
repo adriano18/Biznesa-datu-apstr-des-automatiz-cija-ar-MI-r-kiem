@@ -1,3 +1,9 @@
+"""Interactive coursework experiment for XML sitemap discovery.
+
+Shows the difference between index and flat sitemap formats.
+Not imported by the Flet GUI; its sample positions are only demonstrations.
+Many commented sections record earlier exercises and are not executed."""
+
 import requests
 import xml.etree.ElementTree as ET
 from urllib.parse import urlparse
@@ -10,6 +16,8 @@ from pathlib import Path
 from product_collector import collect_products
 from data_analysis import analyze_products
 
+# HISTORICAL PRACTICE SCRIPT: manually tests one shop from the terminal.
+# The Flet application uses sitemap_reader.get_candidate_urls() instead.
 site = input("Enter shop URL: ").strip()
 parsed_site = urlparse(site)
 base_url = f"{parsed_site.scheme}://{parsed_site.netloc}"
@@ -31,6 +39,7 @@ except requests.RequestException as error:
 
 sitemap_urls = []
 
+# STEP 1: Discover declared sitemaps through robots.txt.
 if robots_response.status_code == 200:
     for line in robots_response.text.splitlines():
         if line.lower().startswith("sitemap:"):
@@ -71,6 +80,7 @@ for sitemap_url in sitemap_urls[:5]:
         print("Content-Type:", response.headers.get("Content-Type"))
         root = ET.fromstring(response.content)
 
+        # STEP 2A: A sitemap index points to more XML files (suns.lv example).
         if root.tag.endswith("sitemapindex"):
             links = root.findall(".//{*}sitemap/{*}loc")
             print("Sitemap index found")
@@ -163,8 +173,10 @@ for sitemap_url in sitemap_urls[:5]:
                         product_urls.append(link.text.strip())
 
                 #suns
+                # STEP 3: Reuse the common collector on a small sample.
                 products = collect_products(product_urls, limit=3)
 
+                # STEP 4: Analyze and export the sample with Pandas.
                 df = analyze_products(products, site)
 
                 print("\nTotal products collected:", len(products))
@@ -235,6 +247,7 @@ for sitemap_url in sitemap_urls[:5]:
                 # else:
                 #     print("No product URL found")
 
+        # STEP 2B: A flat sitemap lists page URLs (zoocentrs.lv example).
         elif root.tag.endswith("urlset"):
             links = root.findall(".//{*}url/{*}loc")
             print("URL sitemap found")

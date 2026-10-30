@@ -1,3 +1,9 @@
+"""Flet desktop interface for the ecommerce analysis coursework.
+
+Two actions: SEO audit -> Excel and category sample -> CSV/PDF.
+Network scraping runs in worker threads so the GUI stays responsive.
+The exact-product matching module is not yet connected to this UI."""
+
 import flet as ft
 import asyncio
 from fetch_sites import fetch_site
@@ -10,6 +16,7 @@ import pandas as pd
 from market_report import main as create_market_report
 from urllib.parse import urlparse
 
+# STEP 1: Discover category URLs, scrape products and prepare the shop summary.
 def build_product_summary(shop_url, keywords):
     urls = get_candidate_urls(shop_url, max_urls=15, keywords=keywords)
 
@@ -86,6 +93,7 @@ def build_product_summary(shop_url, keywords):
 
     return "\n".join(lines)
 
+# STEP 2: Build the Flet window and connect button event handlers.
 async def main(page: ft.Page):
     page.title = "Ecommerce Market Analyzer"
     page.padding = 30
@@ -127,6 +135,7 @@ async def main(page: ft.Page):
     #         print("Shop A URL:", url_a)
     #         print("Shop B URL:", url_b)
 
+    # SEO route: convert the fetched HTML audit into readable lines.
     def format_report(shop_name, data):
         if data["status"] != "OK":
             return f"{shop_name}: {data["status"]} - {data["message"]}"
@@ -138,9 +147,11 @@ async def main(page: ft.Page):
 
         return "\n".join(lines)
 
+    # Product route: process the two shops one after another.
     async def run_products(e):
         urls = [shop_a.value.strip(), shop_b.value.strip()]
 
+        # User-entered comma-separated category terms become URL filter keywords.
         keywords = [
             word.strip()
             for word in category_input.value.split(",")
@@ -173,6 +184,7 @@ async def main(page: ft.Page):
 
             reports.append(summary)
 
+        # PDF uses fixed CSV filenames for these two shops in this version.
         #PDF script
         shops = {urlparse(url).netloc.lower() for url in urls}
         supported_shops = {"suns.lv", "www.zoocentrs.lv"}
@@ -206,6 +218,7 @@ async def main(page: ft.Page):
         products_result.value = "\n\n".join(reports)
         page.update()
 
+    # SEO route: fetch both homepages, compare checks and save an Excel file.
     async def run_analysis(e):
         url_a = shop_a.value.strip()
         url_b = shop_b.value.strip()
@@ -242,6 +255,7 @@ async def main(page: ft.Page):
 
         page.update()
 
+    # Add input fields, actions and the two separate result areas to the window.
     page.add(
         ft.Text("Ecommerce Market Analyzer!", size=30, weight="bold"), 
         ft.Text("SEO Audit and Market Analysis Tool", size=20),

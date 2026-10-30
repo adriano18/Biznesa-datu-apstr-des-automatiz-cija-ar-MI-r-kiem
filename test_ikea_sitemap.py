@@ -1,8 +1,14 @@
+"""Optional live smoke test of IKEA's Latvian product XML sitemap.
+
+Reads the global index, selects prod-lv-LV_*.xml and tests one product URL.
+This is a network test, not an offline unit test, and needs site access."""
+
 import requests
 import xml.etree.ElementTree as ET
 from fetch_sites import fetch_site
 from product_parser import extract_product
 
+# STEP 1: Read IKEA's global sitemap index as an optional compatibility test.
 url = "https://www.ikea.com/sitemaps/sitemap.xml"
 
 response = requests.get(url, timeout=(10, 30))
@@ -16,6 +22,7 @@ sitemaps = [
     if link.text
 ]
 
+# STEP 2: Select the six Latvian-market product sitemap files.
 latvian_sitemaps = [
     link for link in sitemaps
     if "/prod-lv-LV_" in link
@@ -30,6 +37,7 @@ for link in latvian_sitemaps[:3]:
     print(link)
 
 
+# STEP 3: Read only the first product sitemap; do not scrape the whole catalog.
 if latvian_sitemaps:
     product_sitemap_url = latvian_sitemaps[0]
 
