@@ -3,6 +3,43 @@ import asyncio
 from fetch_sites import fetch_site
 from seo_analyzer import analyze_seo
 from excel_report import save_excel
+from sitemap_reader import get_candidate_urls
+from product_collector import collect_products
+from data_analysis import analyze_products
+
+def build_product_summary(shop_url):
+    urls = get_candidate_urls(shop_url, max_urls=10)
+
+    products = collect_products(urls, limit=3)
+
+    df = analyze_products(products, shop_url)
+
+    if df is None:
+        return f"{shop_url}\nNo products found."
+
+    prices = df["price"].dropna()
+
+    average = (
+        f"{prices.mean():.2f} EUR"
+        if not prices.empty
+        else "Not available"
+    )
+
+    in_stock = (
+        df["availability"]
+        .fillna("")
+        .astype(str)
+        .str.endswith("InStock")
+        .sum()
+    )
+
+    return (
+        f"Shop: {shop_url}\n"
+        f"Products collected: {len(df)}\n"
+        f"Average price: {average}\n"
+        f"In stock: {in_stock}\n"
+        f"CSV report saved in reports"
+    )
 
 async def main(page: ft.Page):
     page.title = "Ecommerce Market Analyzer"
@@ -26,6 +63,8 @@ async def main(page: ft.Page):
 
     result = ft.Text("Result will be displayed here", size=14, weight="bold")
 
+    products_result = ft.Text("")
+
     # def run_analysis(e):
     #     url_a = shop_a.value.strip()
     #     url_b = shop_b.value.strip()
@@ -47,6 +86,35 @@ async def main(page: ft.Page):
             lines.append(f"{name} : {item["status"]} | {item['value']}")
 
         return "\n".join(lines)
+
+    async def run_products(e):
+        urls = [shop_a.value.strip(), shop_b.value.strip()]
+
+        if not all(urls):
+            products_result.value = "Enter both shop URLs."
+            page.update()
+            return
+
+        products_result.value = "Starting product analysis..."
+        page.update()
+
+        reports = []
+
+        for url in urls:
+            products_result.value = f"Analyzing {url}..."
+            page.update()
+
+            try:
+                summary = await asyncio.to_thread(
+                    build_product_summary, url
+                )
+            except Exception as error:
+                summary = f"{url}\nError: {error}"
+
+            reports.append(summary)
+
+        products_result.value = "\n\n".join(reports)
+        page.update()
 
     async def run_analysis(e):
         url_a = shop_a.value.strip()
@@ -80,7 +148,7 @@ async def main(page: ft.Page):
             report_a + "\n\n" + report_b
             + f"\n\nExcel saved: {excel_path}"
         )
-        
+
         page.update()
 
     page.add(
@@ -89,6 +157,11 @@ async def main(page: ft.Page):
         shop_a, 
         shop_b, 
         ft.Button("Run Analysis", on_click=run_analysis),
+        ft.Button(
+            content="Analyze Products",
+            on_click=run_products
+        ),
+        products_result,
         result
         )
 

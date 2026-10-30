@@ -7,6 +7,8 @@ from product_parser import extract_product
 from time import sleep
 import pandas as pd
 from pathlib import Path
+from product_collector import collect_products
+from data_analysis import analyze_products
 
 site = input("Enter shop URL: ").strip()
 parsed_site = urlparse(site)
@@ -124,73 +126,82 @@ for sitemap_url in sitemap_urls[:5]:
                 products = []
                 product_urls = []
 
+                # for link in product_links:
+                #     if link.text and "/products/" in link.text:
+                #         # product_url = link.text.strip()
+                #         # break
+                #         product_urls.append(link.text.strip())
+
+                #     if len(product_urls) == 3:
+                #         break
+
+                # for product_url in product_urls:
+                #     print("\nAnalyzing:", product_url)
+
+                #     product_data = fetch_site(product_url)
+
+                #     if product_data["status"] == "OK":
+                #         product = extract_product(product_data["html"])
+
+                #         if product:
+                #             product["url"] = product_url
+                #             products.append(product)
+
+                #             print("Name:", product["name"])
+                #             print("Price:", product["price"])
+                #             print("Availability:", product["availability"])
+
+                #         else:
+                #             print("Product JSON-LD not found :(")
+                #     else:
+                #         print("Fetch status:", product_data["status"])
+
+                #     sleep(1)
+
                 for link in product_links:
                     if link.text and "/products/" in link.text:
-                        # product_url = link.text.strip()
-                        # break
                         product_urls.append(link.text.strip())
 
-                    if len(product_urls) == 3:
-                        break
+                #suns
+                products = collect_products(product_urls, limit=3)
 
-                for product_url in product_urls:
-                    print("\nAnalyzing:", product_url)
-
-                    product_data = fetch_site(product_url)
-
-                    if product_data["status"] == "OK":
-                        product = extract_product(product_data["html"])
-
-                        if product:
-                            product["url"] = product_url
-                            products.append(product)
-
-                            print("Name:", product["name"])
-                            print("Price:", product["price"])
-                            print("Availability:", product["availability"])
-
-                        else:
-                            print("Product JSON-LD not found :(")
-                    else:
-                        print("Fetch status:", product_data["status"])
-
-                    sleep(1)
+                df = analyze_products(products, site)
 
                 print("\nTotal products collected:", len(products))
 
-                if products:
-                    df = pd.DataFrame(products)
+                # if products:
+                #     df = pd.DataFrame(products)
 
-                    print("\n PRODUCT TABLE:")
-                    print(df[["name", "price", "currency", "availability"]].to_string(index=False))
+                #     print("\n PRODUCT TABLE:")
+                #     print(df[["name", "price", "currency", "availability"]].to_string(index=False))
 
-                    df["price"] = pd.to_numeric(df["price"], errors="coerce")
+                #     df["price"] = pd.to_numeric(df["price"], errors="coerce")
 
-                    print("\nPRICE STATISTICS:")
-                    print("Products with prices:", df["price"].count())
-                    print("Minimum price:", df["price"].min())
-                    print("Maximum price:", df["price"].max())
-                    print("Average price:", round(df["price"].mean(), 2))
-                    print("Median price:", df["price"].median())
+                #     print("\nPRICE STATISTICS:")
+                #     print("Products with prices:", df["price"].count())
+                #     print("Minimum price:", df["price"].min())
+                #     print("Maximum price:", df["price"].max())
+                #     print("Average price:", round(df["price"].mean(), 2))
+                #     print("Median price:", df["price"].median())
 
-                    #Shop name
-                    df["store"] = parsed_site.netloc
+                #     #Shop name
+                #     df["store"] = parsed_site.netloc
 
-                    #New folder for reports
-                    folder = Path("reports")
-                    folder.mkdir(exist_ok=True)
+                #     #New folder for reports
+                #     folder = Path("reports")
+                #     folder.mkdir(exist_ok=True)
 
-                    #CSV
-                    shop_name = parsed_site.netloc.replace(".", "_")
-                    csv_path = folder / f"products_{shop_name}.csv"
+                #     #CSV
+                #     shop_name = parsed_site.netloc.replace(".", "_")
+                #     csv_path = folder / f"products_{shop_name}.csv"
 
-                    #Saving
-                    df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+                #     #Saving
+                #     df.to_csv(csv_path, index=False, encoding="utf-8-sig")
 
-                    print("\nCSV saved:", csv_path.resolve())
+                #     print("\nCSV saved:", csv_path.resolve())
 
-                else:
-                    print("No product to analyze")
+                # else:
+                #     print("No product to analyze")
         
                 # if product_url:
                 #     print("\nTesting product:", product_url)
@@ -235,41 +246,89 @@ for sitemap_url in sitemap_urls[:5]:
                 if position < len(links):
                     print(f"URL #{position}: {links[position].text}")
 
-            if len(links) > 500:
-                product_url = links[500].text
+            # if len(links) > 500:
+            #     product_url = links[500].text
 
-                if product_url:
-                    print("\nTesting URL from sitemap:", product_url)
+            #     if product_url:
+            #         print("\nTesting URL from sitemap:", product_url)
 
-                    product_data = fetch_site(product_url)
-                    print("Fetch status:", product_data["status"])
+            #         product_data = fetch_site(product_url)
+            #         print("Fetch status:", product_data["status"])
 
-                    if product_data["status"] == "OK":
-                        soup = BeautifulSoup(
-                            product_data["html"], "html.parser"
-                        )
+            #         if product_data["status"] == "OK":
+            #             soup = BeautifulSoup(
+            #                 product_data["html"], "html.parser"
+            #             )
 
-                        scripts = soup.find_all(
-                            "script",
-                            attrs={"type": "application/ld+json"}
-                        )
+            #             scripts = soup.find_all(
+            #                 "script",
+            #                 attrs={"type": "application/ld+json"}
+            #             )
 
-                        print("JSON-LD blocks found:", len(scripts))
+            #             print("JSON-LD blocks found:", len(scripts))
 
-                        product = extract_product(product_data["html"])
+            #             product = extract_product(product_data["html"])
 
-                        if product:
-                            print("Product found!")
-                            print("Name:", product["name"])
-                            print("SKU:", product["sku"])
-                            print("Price:", product["price"])
-                            print("Currency:", product["currency"])
-                            print("Availability:", product["availability"])
-                        else:
-                            print("Product JSON-LD not found :(")
+            #             if product:
+            #                 print("Product found!")
+            #                 print("Name:", product["name"])
+            #                 print("SKU:", product["sku"])
+            #                 print("Price:", product["price"])
+            #                 print("Currency:", product["currency"])
+            #                 print("Availability:", product["availability"])
+            #             else:
+            #                 print("Product JSON-LD not found :(")
 
-                    else:
-                        print("Reason:", product_data["message"])
+            #         else:
+            #             print("Reason:", product_data["message"])
+
+            candidate_urls = []
+
+            for link in links[500:510]:
+                if link.text:
+                    candidate_urls.append(link.text.strip())
+
+            #zoocentrs
+            products = collect_products(candidate_urls, limit=3)
+
+            df = analyze_products(products, site)
+
+            # print("\nTotal products collected:", len(products))
+
+            # if products:
+            #     df = pd.DataFrame(products)
+
+            #     df["price"] = pd.to_numeric(
+            #         df["price"],
+            #         errors="coerce"
+            #     )
+
+            #     df["store"] = parsed_site.netloc
+
+            #     print("\nPRODUCT TABLE:")
+            #     print(
+            #         df[["name", "price", "currency", "availability"]]
+            #         .to_string(index=False)
+            #     )
+
+            #     print("\nPRICE STATISTICS:")
+            #     print("Minimum:", df["price"].min())
+            #     print("Maximum:", df["price"].max())
+            #     print("Average:", round(df["price"].mean(), 2))
+            #     print("Median:", df["price"].median())
+
+            #     folder = Path("reports")
+            #     folder.mkdir(exist_ok=True)
+
+            #     shop_name = parsed_site.netloc.replace(".", "_")
+            #     csv_path = folder / f"products_{shop_name}.csv"
+
+            #     df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+
+            #     print("\nCSV saved:", csv_path.resolve())
+
+            # else:
+            #     print("No products found in the sample")
 
         else:
             print("Unknown XML structure:", root.tag)
