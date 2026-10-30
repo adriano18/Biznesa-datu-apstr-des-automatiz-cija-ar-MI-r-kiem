@@ -26,6 +26,7 @@ REPORT_DIR.mkdir(exist_ok=True)
 FILENAMES = ["products_suns_lv.csv", "products_www_zoocentrs_lv.csv"]
 
 
+# STEP 1: Read the two collected product CSV samples.
 def read_products():
 
     frames = []
@@ -52,6 +53,7 @@ def read_products():
     return pd.concat(frames, ignore_index=True)
 
 
+# STEP 2: Visualize EUR/kg for each sampled product.
 def create_price_chart(data, target):
     names = []
 
@@ -74,6 +76,7 @@ def create_price_chart(data, target):
     plt.close(fig)
 
 
+# STEP 3: Plot strict InStock counts separately from PreOrder.
 def create_stock_chart(data, target):
     counts = data.groupby("store_short")["availability_short"].apply(lambda col: int((col == "InStock").sum()))
     totals = data.groupby("store_short").size()
@@ -95,6 +98,7 @@ def create_stock_chart(data, target):
     plt.close(fig)
 
 
+# STEP 4: Format two PDF pages with charts, tables and page numbers.
 def make_pdf(data, price_chart, stock_chart, target, category):
     # DejaVu includes Latvian characters; register it for ReportLab PDF text.
     font_path = font_manager.findfont("DejaVu Sans")
@@ -204,6 +208,7 @@ def make_pdf(data, price_chart, stock_chart, target, category):
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
 
 
+# STEP 5: Generate the charts and PDF from the saved CSV files.
 def main(category="sausā kaķu barība"):
     data = read_products()
     price_chart = REPORT_DIR / "chart_price_per_kg.png"
